@@ -1,10 +1,10 @@
 import random
 import os
 import math
-
+from time import sleep
 
 def spawnTable():
-    tableSpawn = (random.randint(1, 9), random.randint(1, mapLength - 2))
+    tableSpawn = (random.randint(1, 9), random.randint(1, mapLength - 3))
     if animatronicMap[tableSpawn[0]][tableSpawn[1]] != ".":
         spawnTable()
         return
@@ -27,6 +27,14 @@ def spawnStunGun():
     animatronicMap[stunGunSpawn[0]][stunGunSpawn[1]] = "г"
 
 def createMap():
+    global sprint
+    sprint = False
+    global sprintMeter
+    sprintMeter = 0
+    global stunCount
+    stunCount = 0
+    global over
+    over = False
     global knockedOut
     knockedOut = False
     global animatronicMap
@@ -106,6 +114,13 @@ def printMap():
         #print(printLine)
         print("".join(printLine))
 
+def chargeSprint():
+    terminalClear()
+    print("Charging sprint.")
+    sleep(1)
+    print("Charging sprint..")
+    sleep(1)
+    print("Charging sprint...")
 
 def grabStunGun(y, x):
     animatronicMap[y][x] = "."
@@ -120,9 +135,9 @@ def fireStun():
         print("You don't have any stuns!")
         return
     dist = ((fredPos[0]-playerPos[0])**2 + (fredPos[1]-playerPos[1])**2)**(1/2)
-    chance = 100 - math.log(dist) + dist
+    chance = 100 - 30 * math.log(dist) + dist
     if dist > 30:
-        chance = 1
+        chance = 0
     if random.randint(1, 100) < round(chance):
         global stunned
         stunned = True
@@ -142,7 +157,8 @@ def playerTurn():
         knockedOut = False
         return
     move = "defined"
-    while not move in ["w", "a", "s", "d", "fire"]:
+    while not move in ["w", "a", "s", "d", "fire", "sprint", "help"]:
+        print(f"You can sprint with 'sprint', learn how this works with 'help'.")
         if stunCount >= 1:
             move = input("What direction do you want to go? (wasd), or would you like to use a stun gun (fire) ").lower()
         else:
@@ -189,6 +205,15 @@ def playerTurn():
         fireStun()
         playerTurn()
         return
+    
+    global sprint
+    if move == "sprint" and not sprint:
+        sprint = True
+        chargeSprint()
+
+    elif move == "sprint" and sprint:
+        playerTurn()
+        return
 
     terminalClear()
 
@@ -201,7 +226,7 @@ def fredTurn():
     dy = playerPos[0] - fredPos[0]
     dx = playerPos[1] - fredPos[1]
 
-    space = [animatronicMap[fredPos[0]-1][fredPos[1]] == "." and [fredPos[0]-1, fredPos[1]] != playerPos, animatronicMap[fredPos[0]][fredPos[1]+1] == "." and [fredPos[0], fredPos[1]+1] != playerPos, animatronicMap[fredPos[0]+1][fredPos[1]] == "." and [fredPos[0]+1, fredPos[1]] != playerPos, animatronicMap[fredPos[0]][fredPos[1]-1] == "." and [fredPos[0], fredPos[1]-1] != playerPos]
+    space = [animatronicMap[fredPos[0]-1][fredPos[1]] == ".", animatronicMap[fredPos[0]][fredPos[1]+1] == ".", animatronicMap[fredPos[0]+1][fredPos[1]] == ".", animatronicMap[fredPos[0]][fredPos[1]-1] == "."]
     up = space[0]
     right = space[1]
     down = space[2]
@@ -229,8 +254,6 @@ def fredTurn():
                     fredPos[1] -= 1
                 
                 return
-    
-    
 
     if abs(dy) > abs(dx) and dy < 0:
         if up:
@@ -410,6 +433,7 @@ def fredTurn():
             else:
                 fredPos[1] -= 1
 
+
     if dx < 0 and dy < 0:
         if (not left and up) or (left and not up):
             if left:
@@ -439,27 +463,62 @@ def fredTurn():
             else:
                 fredPos[1] -= 1
 
+def checkGameOver():
+    global fredPos
+    global playerPos
+    if fredPos == playerPos:
+        return True
+
 def terminalClear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def turn():
     printMap()
-    playerTurn()
+    if random.randint(1, 10) == 10:
+        sprint = True
+        print("Fred is going to sprint, making SEVEN moves unless stunned.")
+    else:
+        sprint = False
+    
+    sprintPrint = "█"
+    global sprintMeter
+
+    if sprintMeter>0:
+        sprintPrint +="█"
+
+    if sprint:
+        for i in range(sprintMeter):
+            playerTurn()
+        sprintMeter-=1
+        if sprintMeter == 0:
+            sprint = False
+    else:
+        sprintMeter+=1
+        playerTurn()
     global stunned
     if not stunned:
-        fredTurn()
+        global over
+        if sprint:
+            for i in range(7):
+                fredTurn()
+                if checkGameOver():
+                    over = True
+                    return
+        else:
+            for i in range(2):
+                fredTurn()
+                if checkGameOver():
+                    over = True
+                    return
     else:
-        if random.randint(0, 3) == 3:
+        if random.randint(1, 3) == 3:
             stunned = False
-    
-
-global stunCount
-stunCount = 0
 
 terminalClear()
 createMap()
 
-while True:
+while not over:
     turn()
 
-print('dine?')
+terminalClear()
+print("         _______________\n        |               |\n        |               |\n        |               |\n        |               |\n--------                 --------\n|                               |\n|                               |\n---------------------------------\n       |                 |\n       |   O         O   |\n       |                 |\n       |                 |\n       |      -----      |")
