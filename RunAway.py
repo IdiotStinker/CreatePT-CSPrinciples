@@ -129,10 +129,11 @@ def grabStunGun(y, x):
     print(f"You collected one stun gun ammo! You currently have {stunCount}")
 
 def fireStun():
-    
+    terminalClear()
     global stunCount
     if stunCount < 1:
         print("You don't have any stuns!")
+        printMap()
         return
     dist = ((fredPos[0]-playerPos[0])**2 + (fredPos[1]-playerPos[1])**2)**(1/2)
     chance = 100 - 30 * math.log(dist) + dist
@@ -147,7 +148,7 @@ def fireStun():
             print(f"You missed with a 0% chance! Try firing closer!")
         else:
             print(f"You missed with a {round(chance)}% chance!")
-    
+    printMap()
     stunCount-=1
 
 def playerTurn():
@@ -475,19 +476,38 @@ def terminalClear():
 def turn():
     printMap()
     if random.randint(1, 10) == 10:
-        sprint = True
+        charge = True
         print("Fred is going to sprint, making SEVEN moves unless stunned.")
     else:
-        sprint = False
+        charge = False
     
-    sprintPrint = "█"
+    sprintPrint = ""
     global sprintMeter
 
     if sprintMeter>0:
-        sprintPrint +="█"
-
+        sprintPrint +="\033[32m█"
+    if sprintMeter>1:
+        sprintPrint +="\033[31m█"
+    if sprintMeter>2:
+        sprintPrint +="\033[30m█"
+    if sprintMeter>3:
+        sprintPrint +="\033[34m█"
+    if sprintMeter>4:
+        sprintPrint +="\033[35m█"
+    if sprintMeter>5:
+        sprintPrint +="\033[36m█"
+    if sprintMeter>6:
+        sprintPrint +="\033[37m█"
+    
+    sprintPrint+="\003[30m "
+    print(sprintPrint)
+    global sprint
     if sprint:
         for i in range(sprintMeter):
+            if i ==0:
+                playerTurn()
+                continue
+            printMap()
             playerTurn()
         sprintMeter-=1
         if sprintMeter == 0:
@@ -498,7 +518,7 @@ def turn():
     global stunned
     if not stunned:
         global over
-        if sprint:
+        if charge:
             for i in range(7):
                 fredTurn()
                 if checkGameOver():
