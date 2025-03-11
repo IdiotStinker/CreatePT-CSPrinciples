@@ -151,12 +151,14 @@ def fireStun():
     printMap()
     stunCount-=1
 
-def playerTurn():
+def playerTurn(dist = 0):
     grabbedStunGun = False
     global knockedOut
     if knockedOut:
         knockedOut = False
         return
+    if dist != 0:
+        print(f"You are moving {dist} spaces in ONE direction (Don't run into a wall!)")
     move = "defined"
     while not move in ["w", "a", "s", "d", "fire", "sprint", "help"]:
         print(f"You can sprint with 'sprint', learn how this works with 'help'.")
@@ -167,45 +169,68 @@ def playerTurn():
         if move == "w":
             if animatronicMap[playerPos[0]-1][playerPos[1]] != "." or [playerPos[0]-1, playerPos[1]] == fredPos:
                 if animatronicMap[playerPos[0]-1][playerPos[1]] == "г":
-                    grabbedStunGun = True
+                    grabStunGun(playerPos[0]-1, playerPos[1])
                     break
                 move = "defined"
                 continue
         if move == "a":
             if animatronicMap[playerPos[0]][playerPos[1]-1] != "." or [playerPos[0], playerPos[1]-1] == fredPos:
                 if animatronicMap[playerPos[0]][playerPos[1]-1] == "г":
-                    grabbedStunGun = True
+                    grabStunGun(playerPos[0], playerPos[1]-1)
                     break
                 move = "defined"
                 continue
         if move == "s":
             if animatronicMap[playerPos[0]+1][playerPos[1]] != "." or [playerPos[0]+1, playerPos[1]] == fredPos:
                 if animatronicMap[playerPos[0]+1][playerPos[1]] == "г":
-                    grabbedStunGun = True
+                    grabStunGun(playerPos[0]+1, playerPos[1])
                     break
                 move = "defined"
                 continue
         if move == "d":
             if animatronicMap[playerPos[0]][playerPos[1]+1] != "." or [playerPos[0], playerPos[1]+1] == fredPos:
                 if animatronicMap[playerPos[0]][playerPos[1]+1] == "г":
-                    grabbedStunGun = True
+                    grabStunGun(playerPos[0], playerPos[1]+1)
                     break
                 move = "defined"
                 continue
     
-    if move == "w":
-        playerPos[0] -= 1
-    if move == "a":
-        playerPos[1] -= 1
-    if move == "s":
-        playerPos[0] += 1
-    if move == "d":
-        playerPos[1] += 1
-    
     if move == "fire":
         fireStun()
-        playerTurn()
+        playerTurn(dist)
         return
+
+    if dist == 0:
+        dist=1
+
+    if move == "w":
+        for i in range (dist):
+            playerPos[0] -= 1
+            if animatronicMap[playerPos[0]][playerPos[1]] == "г":
+                grabStunGun(playerPos[0], playerPos[1])
+            if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
+                playerPos[0]+=1
+    if move == "a":
+        for i in range (dist):
+            playerPos[1] -= 1
+            if animatronicMap[playerPos[0]][playerPos[1]] == "г":
+                grabStunGun(playerPos[0], playerPos[1])
+            if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
+                playerPos[1]+=1
+    if move == "s":
+        for i in range (dist):
+            playerPos[0] += 1
+            if animatronicMap[playerPos[0]][playerPos[1]] == "г":
+                grabStunGun(playerPos[0], playerPos[1])
+            if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
+                playerPos[0]-=1
+    if move == "d":
+        for i in range (dist):
+            playerPos[1] += 1
+            if animatronicMap[playerPos[0]][playerPos[1]] == "г":
+                grabStunGun(playerPos[0], playerPos[1])
+            if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
+                playerPos[1]-=1
     
     global sprint
     if move == "sprint" and not sprint:
@@ -218,8 +243,6 @@ def playerTurn():
 
     terminalClear()
 
-    if grabbedStunGun:
-        grabStunGun(playerPos[0], playerPos[1])
     #printMap()
     #playerTurn()
 
@@ -485,35 +508,39 @@ def turn():
     global sprintMeter
 
     if sprintMeter>0:
-        sprintPrint +="\033[32m█"
+        sprintPrint +=("\x1b[0;32;40m█"*3)
     if sprintMeter>1:
-        sprintPrint +="\033[31m█"
+        sprintPrint +=("\x1b[1;32;40m█"*3)
     if sprintMeter>2:
-        sprintPrint +="\033[30m█"
+        sprintPrint +=("\x1b[1;33;40m█"*3)
     if sprintMeter>3:
-        sprintPrint +="\033[34m█"
+        sprintPrint +=("\x1b[0;33;40m█"*3)
     if sprintMeter>4:
-        sprintPrint +="\033[35m█"
+        sprintPrint +=("\x1b[1;31;40m█"*3)
     if sprintMeter>5:
-        sprintPrint +="\033[36m█"
-    if sprintMeter>6:
-        sprintPrint +="\033[37m█"
+        sprintPrint +=("\x1b[2;31;40m█"*3)
     
-    sprintPrint+="\003[30m "
+    sprintPrint+="\x1b[0m"
+    print()
     print(sprintPrint)
+    print()
     global sprint
     if sprint:
+        '''
         for i in range(sprintMeter):
             if i ==0:
                 playerTurn()
                 continue
             printMap()
             playerTurn()
+        '''
+        playerTurn(sprintMeter)
         sprintMeter-=1
         if sprintMeter == 0:
             sprint = False
     else:
-        sprintMeter+=1
+        if sprintMeter<6:
+            sprintMeter+=1
         playerTurn()
     global stunned
     if not stunned:
