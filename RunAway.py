@@ -27,6 +27,10 @@ def spawnStunGun():
     animatronicMap[stunGunSpawn[0]][stunGunSpawn[1]] = "г"
 
 def createMap():
+    global win
+    win = False
+    global bumped
+    bumped = False
     global sprint
     sprint = False
     global sprintMeter
@@ -73,9 +77,9 @@ def createMap():
                 animatronicMap[i].append(".")
             
             if i == doorSpot or i == doorSpot + 1:
-                animatronicMap[i].extend([".", ".", "."])
+                animatronicMap[i].extend([".", ".", ".", ".", ".", ".", ".", ".", "."])
             else:
-                animatronicMap[i].extend(["|", ".", "."])
+                animatronicMap[i].extend(["|", ".", ".", ".", ".", ".", ".", ".", "."])
     
     playerSpawn = (random.randint(1, 9), random.randint(1, 10))
     global playerPos
@@ -160,8 +164,8 @@ def playerTurn(dist = 0):
     if dist != 0:
         print(f"You are moving {dist} spaces in ONE direction (Don't run into a wall!)")
     move = "defined"
-    while not move in ["w", "a", "s", "d", "fire", "sprint", "help"]:
-        print(f"You can sprint with 'sprint', learn how this works with 'help'.")
+    while not move in ["w", "a", "s", "d", "fire", "sprint"]:
+        print(f"You can sprint with 'sprint'")
         if stunCount >= 1:
             move = input("What direction do you want to go? (wasd), or would you like to use a stun gun (fire) ").lower()
         else:
@@ -203,6 +207,9 @@ def playerTurn(dist = 0):
     if dist == 0:
         dist=1
 
+    global bumped
+    bumped = False
+
     if move == "w":
         for i in range (dist):
             playerPos[0] -= 1
@@ -210,6 +217,8 @@ def playerTurn(dist = 0):
                 grabStunGun(playerPos[0], playerPos[1])
             if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
                 playerPos[0]+=1
+                bumped = True
+                return
     if move == "a":
         for i in range (dist):
             playerPos[1] -= 1
@@ -217,6 +226,8 @@ def playerTurn(dist = 0):
                 grabStunGun(playerPos[0], playerPos[1])
             if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
                 playerPos[1]+=1
+                bumped = True
+                return
     if move == "s":
         for i in range (dist):
             playerPos[0] += 1
@@ -224,6 +235,8 @@ def playerTurn(dist = 0):
                 grabStunGun(playerPos[0], playerPos[1])
             if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
                 playerPos[0]-=1
+                bumped = True
+                return
     if move == "d":
         for i in range (dist):
             playerPos[1] += 1
@@ -231,6 +244,8 @@ def playerTurn(dist = 0):
                 grabStunGun(playerPos[0], playerPos[1])
             if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
                 playerPos[1]-=1
+                bumped = True
+                return
     
     global sprint
     if move == "sprint" and not sprint:
@@ -525,23 +540,35 @@ def turn():
     print(sprintPrint)
     print()
     global sprint
-    if sprint:
-        '''
-        for i in range(sprintMeter):
-            if i ==0:
+    global bumped
+    if not bumped:
+        if sprint:
+            '''
+            for i in range(sprintMeter):
+                if i ==0:
+                    playerTurn()
+                    continue
+                printMap()
                 playerTurn()
-                continue
-            printMap()
+            '''
+            playerTurn(sprintMeter)
+            sprintMeter-=1
+            if sprintMeter == 0:
+                sprint = False
+        else:
+            if sprintMeter<6:
+                sprintMeter+=1
             playerTurn()
-        '''
-        playerTurn(sprintMeter)
-        sprintMeter-=1
-        if sprintMeter == 0:
-            sprint = False
     else:
-        if sprintMeter<6:
-            sprintMeter+=1
-        playerTurn()
+        terminalClear()
+        print("You bumped into a wall and lost a turn.")
+        bumped = False
+
+    if playerPos[1] > mapLength+3:
+        global win
+        win = True
+        return
+    
     global stunned
     if not stunned:
         global over
@@ -564,8 +591,13 @@ def turn():
 terminalClear()
 createMap()
 
-while not over:
+while not over and not win:
     turn()
 
 terminalClear()
-print("         _______________\n        |               |\n        |               |\n        |               |\n        |               |\n--------                 --------\n|                               |\n|                               |\n---------------------------------\n       |                 |\n       |   O         O   |\n       |                 |\n       |                 |\n       |      -----      |")
+if over:
+    print("         _______________\n        |               |\n        |               |\n        |               |\n        |               |\n--------                 --------\n|                               |\n|                               |\n---------------------------------\n       |                 |\n       |   O         O   |\n       |                 |\n       |                 |\n       |      -----      |")
+
+if win:
+    print("You Won!")
+    
