@@ -600,4 +600,5 @@ if over:
 
 if win:
     print("You Won!")
+    print("Successfully beating Fred.")
     
