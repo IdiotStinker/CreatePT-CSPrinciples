@@ -42,13 +42,14 @@ def createMap():
     global knockedOut
     knockedOut = False
     global animatronicMap
-    animatronicMap = [[], [], [], [], [], [], [], [], [], [], []]
+    
     global mapLength
     mapLength = random.randint(20, 60)
     global stunned
     stunned = False
     #print(mapLength)
     doorSpot = random.randint(1, 9)
+    animatronicMap = [[], [], [], [], [], [], [], [], [], [], []]
     for i in range(11):
         if i == 0 or i == 10:
             for j in range(mapLength):
@@ -564,7 +565,7 @@ def turn():
         print("You bumped into a wall and lost a turn.")
         bumped = False
 
-    if playerPos[1] > mapLength+3:
+    if playerPos[1] > mapLength+2:
         global win
         win = True
         return
@@ -587,6 +588,7 @@ def turn():
     else:
         if random.randint(1, 3) == 3:
             stunned = False
+            print("Fred woke up from the stun!")
 
 terminalClear()
 createMap()
