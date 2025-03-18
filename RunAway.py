@@ -590,17 +590,31 @@ def turn():
             stunned = False
             print("Fred woke up from the stun!")
 
-terminalClear()
-createMap()
+def start():
+    terminalClear()
+    createMap()
 
-while not over and not win:
-    turn()
+    while not over and not win:
+        turn()
 
-terminalClear()
-if over:
-    print("         _______________\n        |               |\n        |               |\n        |               |\n        |               |\n--------                 --------\n|                               |\n|                               |\n---------------------------------\n       |                 |\n       |   O         O   |\n       |                 |\n       |                 |\n       |      -----      |")
+    terminalClear()
+    if over:
+        print("         _______________\n        |               |\n        |               |\n        |               |\n        |               |\n--------                 --------\n|                               |\n|                               |\n---------------------------------\n       |                 |\n       |   O         O   |\n       |                 |\n       |                 |\n       |      -----      |")
 
-if win:
-    print("You Won!")
-    print("Successfully beating Fred.")
+    if win:
+        print("You Won!")
+        print("Successfully beating Fred.")
     
+    sleep(10)
+
+    terminalClear()
+
+    regame = input("Play again? (y or n) ")
+    while not regame in ["y", "n"]:
+        terminalClear()
+        regame = input("Play again? (y or n) ")
+
+    if regame == "y":
+        start()
+
+start()
