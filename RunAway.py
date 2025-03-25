@@ -212,12 +212,16 @@ def playerTurn(dist = 0):
     bumped = False
 
     if move == "w":
+        #Go for as long as your sprint
         for i in range (dist):
             playerPos[0] -= 1
+            #Get gun
             if animatronicMap[playerPos[0]][playerPos[1]] == "г":
                 grabStunGun(playerPos[0], playerPos[1])
+            #If its a wall, step back and get stunned
             if animatronicMap[playerPos[0]][playerPos[1]] != "." or [playerPos[0], playerPos[1]] == fredPos:
                 playerPos[0]+=1
+                #lose a turn
                 bumped = True
                 return
     if move == "a":
@@ -249,10 +253,12 @@ def playerTurn(dist = 0):
                 return
     
     global sprint
+    #Start sprinting
     if move == "sprint" and not sprint:
         sprint = True
         chargeSprint()
 
+    #Bad move, try again
     elif move == "sprint" and sprint:
         playerTurn()
         return
@@ -266,6 +272,7 @@ def fredTurn():
     dy = playerPos[0] - fredPos[0]
     dx = playerPos[1] - fredPos[1]
 
+    #Find if room in each direction
     space = [animatronicMap[fredPos[0]-1][fredPos[1]] == ".", animatronicMap[fredPos[0]][fredPos[1]+1] == ".", animatronicMap[fredPos[0]+1][fredPos[1]] == ".", animatronicMap[fredPos[0]][fredPos[1]-1] == "."]
     up = space[0]
     right = space[1]
@@ -278,9 +285,11 @@ def fredTurn():
         if bool:
             dirs += 1
     
+    #If he can't move, there's a bug
     if dirs == 0:
         print("woah! no movy")
     
+    #If there is one dir move it
     if dirs == 1:
         for b, bool in enumerate(space):
             if bool:
@@ -295,21 +304,25 @@ def fredTurn():
                 
                 return
 
+    #If closer vert, and can go vert, go vert
     if abs(dy) > abs(dx) and dy < 0:
         if up:
             fredPos[0] -= 1
             return
         #dy = 0
+    #If closer vert, and can go vert, go vert
     if abs(dy) > abs(dx) and dy > 0:
         if down:
             fredPos[0] += 1
             return
         #dy = 0
+    #If closer horz, and can go horz, go horz
     if abs(dy) < abs(dx) and dx < 0:
         if left:
             fredPos[1] -= 1
             return
         #dx = 0
+    #If closer horz, and can go horz, go horz
     if abs(dy) < abs(dx) and dx > 0:
         if right:
             fredPos[1] += 1
@@ -318,6 +331,7 @@ def fredTurn():
     
 
     if dy == 0:
+        #only one dir, but cant go ideal way, 50/50 other dir
         if dx > 0 and not right:
             if up and down:
                 if random.randint(0,1) == 0:
@@ -326,6 +340,7 @@ def fredTurn():
                     fredPos[0]+=1
                 return
             
+            #or if only can go one way dont 50/50
             if up:
                 fredPos[0] -= 1
             
@@ -334,6 +349,7 @@ def fredTurn():
             
             return
         
+        #only one dir, but cant go ideal way, 50/50 other dir
         if dx < 0 and not left:
             if up and down:
                 if random.randint(0,1) == 0:
@@ -342,6 +358,7 @@ def fredTurn():
                     fredPos[0]+=1
                 return
             
+            #or if only can go one way dont 50/50
             if up:
                 fredPos[0] -= 1
             
@@ -351,6 +368,7 @@ def fredTurn():
             return
         
     if dx == 0:
+        #only one dir, but cant go ideal way, 50/50 other dir
         if dy > 0 and not down:
             if left and right:
                 if random.randint(0,1) == 0:
@@ -359,6 +377,7 @@ def fredTurn():
                     fredPos[1]+=1
                 return
             
+            #or if only can go one way dont 50/50
             if left:
                 fredPos[1] -= 1
             
@@ -366,6 +385,8 @@ def fredTurn():
                 fredPos[1]+=1
             
             return
+        
+        #only one dir, but cant go ideal way, 50/50 other dir
         if dy < 0 and not up:
             if left and right:
                 if random.randint(0,1) == 0:
@@ -374,6 +395,7 @@ def fredTurn():
                     fredPos[1]+=1
                 return
             
+            #or if only can go one way dont 50/50
             if left:
                 fredPos[1] -= 1
             
@@ -387,6 +409,7 @@ def fredTurn():
     #    print("woah")
 
     if dx > 0 and dy > 0:
+        #If can only go one way when either is acceptable, go one way
         if (not right and down) or (right and not down):
             if right:
                 fredPos[1] += 1
@@ -394,7 +417,7 @@ def fredTurn():
             if down:
                 fredPos[0] += 1
                 return
-
+        #If neither dir that supposed to go, go 50/50 or whatever only way
         if not right and not down:
             if abs(dy) == abs(dx):
                 #Go left or up
@@ -515,6 +538,7 @@ def terminalClear():
 def turn():
     printMap()
     if random.randint(1, 10) == 10:
+        #One in ten to charge
         charge = True
         print("Fred is going to sprint, making SEVEN moves unless stunned.")
     else:
@@ -523,6 +547,7 @@ def turn():
     sprintPrint = ""
     global sprintMeter
 
+    #Add colored blocks to the meter
     if sprintMeter>0:
         sprintPrint +=("\x1b[0;32;40m█"*3)
     if sprintMeter>1:
@@ -552,11 +577,14 @@ def turn():
                 printMap()
                 playerTurn()
             '''
+            #Run as much dist as sprint.
             playerTurn(sprintMeter)
             sprintMeter-=1
+            #stop the sprinting and get sprint meter back up
             if sprintMeter == 0:
                 sprint = False
         else:
+            #cant go past 6
             if sprintMeter<6:
                 sprintMeter+=1
             playerTurn()
@@ -565,6 +593,7 @@ def turn():
         print("You bumped into a wall and lost a turn.")
         bumped = False
 
+    #If the player gets outside the map, win
     if playerPos[1] > mapLength+2:
         global win
         win = True
@@ -586,7 +615,8 @@ def turn():
                     over = True
                     return
     else:
-        if random.randint(1, 3) == 3:
+        if random.randint(1, 4) == 1:
+            #If he gets unstunned, inform player
             stunned = False
             print("Fred woke up from the stun!")
 
@@ -609,6 +639,7 @@ def start():
 
     terminalClear()
 
+    #If says y or n, play again
     regame = input("Play again? (y or n) ")
     while not regame in ["y", "n"]:
         terminalClear()
