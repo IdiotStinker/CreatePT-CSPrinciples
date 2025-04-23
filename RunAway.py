@@ -8,25 +8,29 @@ def spawnTable():
     if animatronicMap[tableSpawn[0]][tableSpawn[1]] != ".":
         spawnTable()
         return
+    #If spot has something, try again.
     
     animatronicMap[tableSpawn[0]][tableSpawn[1]] = "□"
 
     for dy, dx in [[0, 1], [1, 0], [0, -1], [-1, 0]]:
         if animatronicMap[tableSpawn[0] + dy][tableSpawn[1] + dx] != ".":
             continue
+        #If something there don't spawn chair.
 
         if random.randint(0, 1) == 0:
+            #50/50 on chair
             animatronicMap[tableSpawn[0] + dy][tableSpawn[1] + dx] = "⑁"
     
 def spawnStunGun():
     stunGunSpawn = (random.randint(1, 9), random.randint(1, mapLength - 2))
+    #If spot taken, try again.
     if animatronicMap[stunGunSpawn[0]][stunGunSpawn[1]] != ".":
         spawnStunGun()
         return
 
     animatronicMap[stunGunSpawn[0]][stunGunSpawn[1]] = "г"
 
-def createMap():
+def createMap(length):
     global win
     win = False
     global bumped
@@ -42,25 +46,27 @@ def createMap():
     global knockedOut
     knockedOut = False
     global animatronicMap
-    
     global mapLength
-    mapLength = random.randint(20, 60)
     global stunned
     stunned = False
-    #print(mapLength)
     doorSpot = random.randint(1, 9)
+    mapLength = length
     animatronicMap = [[], [], [], [], [], [], [], [], [], [], []]
     for i in range(11):
         if i == 0 or i == 10:
             for j in range(mapLength):
                 if j == 0 and i == 0:
+                    #corner
                     animatronicMap[i].append(" ")
                     continue
                 elif j == 0 and i == 10:
+                    #corner
                     animatronicMap[i].append("\\")
                     continue
+                #Last two
                 animatronicMap[i].append("_")
             
+            #Specific last spots for different door spots
             if i == 0 and doorSpot != 1:
                 animatronicMap[i].extend([" ", "_", "_"])
             elif i == 0 and doorSpot == 1:
@@ -71,31 +77,37 @@ def createMap():
                 animatronicMap[i].extend(["_", "_", "_"])
             
         else:
+            #First wall
             for j in range(mapLength):
                 if j == 0:
                     animatronicMap[i].append("|")
                     continue
                 animatronicMap[i].append(".")
             
+            #Add an extra ton of room so that the game doesn't
+            #break when sprinting passed the finish.
             if i == doorSpot or i == doorSpot + 1:
                 animatronicMap[i].extend([".", ".", ".", ".", ".", ".", ".", ".", "."])
             else:
                 animatronicMap[i].extend(["|", ".", ".", ".", ".", ".", ".", ".", "."])
     
+    #Player near beginning
     playerSpawn = (random.randint(1, 9), random.randint(1, 10))
     global playerPos
     playerPos = [playerSpawn[0], playerSpawn[1]]
     animatronicMap[playerSpawn[0]][playerSpawn[1]] = "P"
     
-
+    #Fred near end
     fredSpawn = (random.randint(1, 9), random.randint(mapLength - 5, mapLength - 2))
     global fredPos
     fredPos = [fredSpawn[0], fredSpawn[1]]
     animatronicMap[fredPos[0]][fredPos[1]] = "F"
 
+    #Spawn 3-8 tables
     for i in range(random.randint(3, 8)):
         spawnTable()
     
+    #Spawn 2-5 stun guns.
     for i in range(random.randint(2, 5)):
         spawnStunGun()
 
@@ -128,9 +140,11 @@ def chargeSprint():
     print("Charging sprint...")
 
 def grabStunGun(y, x):
+    #Take stun gun at spot and turn into blank spot.
     animatronicMap[y][x] = "."
     global stunCount
     stunCount += 1
+    #Tell player he picked gun and add one stun to count.
     print(f"You collected one stun gun ammo! You currently have {stunCount}")
 
 def fireStun():
@@ -140,44 +154,57 @@ def fireStun():
         print("You don't have any stuns!")
         printMap()
         return
+    #Probability for landing the stun.
     dist = ((fredPos[0]-playerPos[0])**2 + (fredPos[1]-playerPos[1])**2)**(1/2)
     chance = 100 - 30 * math.log(dist) + dist
     if dist > 30:
+        #Over 30 dist = miss
         chance = 0
     if random.randint(1, 100) < round(chance):
         global stunned
         stunned = True
+        #Change the global stun bool to true, changing Fred behavior
         print("Stunned!")
     else:
+        #Tell the player they missed
         if round(chance) < 0:
             print(f"You missed with a 0% chance! Try firing closer!")
         else:
             print(f"You missed with a {round(chance)}% chance!")
     printMap()
     stunCount-=1
+    #Lost a stun
 
 def playerTurn(dist = 0):
     grabbedStunGun = False
+    #If previously ran into wall, skip turn.
     global knockedOut
     if knockedOut:
         knockedOut = False
         return
+    #FOR SPRINT ONLY:
     if dist != 0:
         print(f"You are moving {dist} spaces in ONE direction (Don't run into a wall!)")
     move = "defined"
+    #Make sure the input makes sense.
     while not move in ["w", "a", "s", "d", "fire", "sprint"]:
         print(f"You can sprint with 'sprint'")
         if stunCount >= 1:
+            #If player has a stun, inform them.
             move = input("What direction do you want to go? (wasd), or would you like to use a stun gun (fire) ").lower()
         else:
             move = input("What direction do you want to go? (wasd) ").lower()
+        #MOOOOVE.
         if move == "w":
+            #If that next spot is Fred or a wall, you can't do it and try again.
             if animatronicMap[playerPos[0]-1][playerPos[1]] != "." or [playerPos[0]-1, playerPos[1]] == fredPos:
+                #But if it is a stun gun, you can go.
                 if animatronicMap[playerPos[0]-1][playerPos[1]] == "г":
                     grabStunGun(playerPos[0]-1, playerPos[1])
                     break
                 move = "defined"
                 continue
+        #Same for all 4 directions.
         if move == "a":
             if animatronicMap[playerPos[0]][playerPos[1]-1] != "." or [playerPos[0], playerPos[1]-1] == fredPos:
                 if animatronicMap[playerPos[0]][playerPos[1]-1] == "г":
@@ -200,11 +227,13 @@ def playerTurn(dist = 0):
                 move = "defined"
                 continue
     
+    #Fire! Then move again
     if move == "fire":
         fireStun()
         playerTurn(dist)
         return
 
+    #Not sprinting, add to meter.
     if dist == 0:
         dist=1
 
@@ -224,6 +253,7 @@ def playerTurn(dist = 0):
                 #lose a turn
                 bumped = True
                 return
+    #Same for all directions
     if move == "a":
         for i in range (dist):
             playerPos[1] -= 1
@@ -602,6 +632,7 @@ def turn():
     global stunned
     if not stunned:
         global over
+        #Move 7 times if Fred is charging.
         if charge:
             for i in range(7):
                 fredTurn()
@@ -622,19 +653,22 @@ def turn():
 
 def start():
     terminalClear()
-    createMap()
+    #Create map with 20-60 len
+    createMap(random.randint(20, 60))
 
     while not over and not win:
         turn()
 
     terminalClear()
     if over:
+        #Horror!!!
         print("         _______________\n        |               |\n        |               |\n        |               |\n        |               |\n--------                 --------\n|                               |\n|                               |\n---------------------------------\n       |                 |\n       |   O         O   |\n       |                 |\n       |                 |\n       |      -----      |")
 
     if win:
         print("You Won!")
         print("Successfully beating Fred.")
     
+    #Wait 10 sec before asking for new game.
     sleep(10)
 
     terminalClear()
